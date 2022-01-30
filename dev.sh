@@ -44,7 +44,7 @@ function main {
     --interactive \
     --tty \
     --env "AD_HOC=1" \
-    --mount "type=bind,src=$1,dst=${container_workspace_folder}" \
+    --mount "type=bind,src=${local_workspace_folder},dst=${container_workspace_folder}" \
     --workdir "${container_workspace_folder}" \
     --user "$(id --user):$(id --group)" \
     --name "${DEV_CONTAINER_NAME}" \
