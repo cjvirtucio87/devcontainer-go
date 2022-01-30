@@ -5,7 +5,11 @@ set -eo pipefail
 ### Build and run the dev container (drops into a shell).
 ###
 ### Usage:
-###   <Options> ./dev.sh <Arguments>
+###   ./dev.sh <Arguments>
+###
+### Arguments:
+###   local_workspace_folder: path to the local workspace
+###     that should be mounted into the container
 
 DEV_ROOT_DIR="$(dirname "$(readlink --canonicalize "$0")")"
 readonly DEV_ROOT_DIR
@@ -18,6 +22,12 @@ function cleanup {
 }
 
 function main {
+  local local_workspace_folder="$1"
+  if [[ -z "${local_workspace_folder}" ]]; then
+    >&2 echo "must pass the path to the local workspace folder"
+    return 1
+  fi
+
   >&2 echo "preliminary cleanup"
   cleanup
   trap cleanup EXIT
@@ -26,13 +36,16 @@ function main {
   . "${DEV_ROOT_DIR}/build.sh"
 
   docker_build_rocky8
-
+  local workspace_name
+  workspace_name="$(basename "${local_workspace_folder}")"
+  local container_workspace_folder="/workspaces/${workspace_name}"
   docker run \
     --rm \
     --interactive \
     --tty \
     --env "AD_HOC=1" \
-    --mount "type=bind,src=${DEV_ROOT_DIR},dst=/home/dev" \
+    --mount "type=bind,src=$1,dst=${container_workspace_folder}" \
+    --workdir "${container_workspace_folder}" \
     --user "$(id --user):$(id --group)" \
     --name "${DEV_CONTAINER_NAME}" \
     "${ROCKY8_TAG}"
